@@ -1,0 +1,79 @@
+<!-- Local rules -->
+
+<!-- Modify it at your will. -->
+<!-- Copyright (C) 2015, Wazuh Inc. -->
+
+<!-- Example -->
+<group name="local,syslog,sshd,">
+
+  <!--
+  Dec 10 01:02:02 host sshd[1234]: Failed none for root from 1.1.1.1 port 1066 ssh2
+  -->
+  <rule id="100001" level="5">
+    <if_sid>5716</if_sid>
+    <srcip>1.1.1.1</srcip>
+    <description>sshd: authentication failed from IP 1.1.1.1.</description>
+    <group>authentication_failed,pci_dss_10.2.4,pci_dss_10.2.5,</group>
+  </rule>
+
+</group>
+
+
+<group name="windows,authentication_success,">
+	<rule id="200002" level="7">
+                <decoded_as>json</decoded_as>
+		<field name="win.system.eventID">^4624$</field>
+		<field name="win.eventdata.LogonType">^2$</field>
+		<description>Inicio de sesion</description>
+	</rule>
+	<rule id="200003" level="7">
+                <decoded_as>json</decoded_as>
+		<field name="win.system.eventID">^4634$</field>
+		<description>Cierre de sesion</description>
+	</rule>
+</group>
+
+<group name="scripts,">
+        <rule id="200004" level="7">
+                <decoded_as>json</decoded_as>
+                <field name="message">sesion cerrada</field>
+                <description>Timestamp recibido</description>
+        </rule>
+</group>
+
+
+<group name="windows-usb-detect,">
+  <rule id="111000" level="7">
+    <if_sid>60103</if_sid>
+    <field name="win.system.eventID">^6416$</field>
+    <match>USBSTOR\\Disk</match>
+    <options>no_full_log</options>
+    <description>Windows: A PNP device $(win.eventdata.deviceDescription) was connected to $(win.system.computer)</description>
+  </rule>
+</group>
+
+<group name="windows,powershell,health_metrics">
+  <rule id="100700" level="3">
+	<decoded_as>json</decoded_as>
+	<field name="command">\.+</field>
+	<description>Health metrics received: $(command)</description>
+  </rule>
+
+  <rule id="100701" level="3">
+	<if_sid>100700</if_sid>
+	<field name="json.ipAddress">\.+</field>
+	<field name="json.ram">\.+</field>
+	<field name="json.cpu">\.+</field>
+	<field name="json.disk">\.+</field>
+	<description>System health: IP=$(json.ipAddress), RAM=$(json.ram), CPU=$(json.cpu), Disk=$(json.disk)</description>
+  </rule>
+</group>
+
+<group name="performance_metric,">
+  <!-- CPU, Memory and Disk usage -->
+  <rule id="100054" level="3">
+    <decoded_as>general_health_check</decoded_as>
+    <description>CPU | MEMORY | DISK usage metrics</description>
+  </rule>
+</group>
+
